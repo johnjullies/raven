@@ -168,10 +168,11 @@ def sms_subscription():
 
     else:
         print('SMS Unsubscription')
-        unsubscribe = request.args.get('unsubsribed')
-        json_dumps = json.dumps(unsubscribe)
-        print(json_dumps)
-
+        unsubscribed = request.json
+        access_token = unsubscribed['unsubscribed']['access_token']
+        unsubscription = Subscription.query.filter_by(access_token=access_token).first()
+        db.session.delete(unsubscription)
+        db.session.commit()
 
 
     return render_template('base.html'), 200
