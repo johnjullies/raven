@@ -2,7 +2,7 @@ from twisted.internet import task
 from twisted.internet import reactor
 import requests
 
-timeout = 150.0 # 150 seconds
+timeout = 100.0 # 100 seconds
 
 def doWork():
     resp = requests.get('https://2363c32a.ngrok.io/sendmessage')

@@ -7,6 +7,7 @@ from flask_sqlalchemy import SQLAlchemy
 
 # WEBFORM APP
 SENDER_ADDRESS = '0409'
+SMS_SENDER_ADDRESS = '9380'
 APP_ID = 'zxRKC5eX4XH9dcMa4LTXAeH4ExXoCjqe'
 APP_SECRET = '380441e6afb36361eb8b0f391aa00c503dba369ab0fcb401896bf614c7e440c9'
 CONSUMER_KEY = 'M4xXlecXHdcqzOR81col45gIM'
@@ -86,10 +87,17 @@ def index():
 
             subscription = Subscription.query.all()
             for subscriber in subscription:
+                print('Sending message...')
                 access_token = subscriber.access_token
                 subscriber_number = subscriber.subscriber_number
                 data = {'address': '0'+subscriber_number, 'message': 'From PAGASA-DOST:\n\n' + status.text}
                 resp = requests.post('https://devapi.globelabs.com.ph/smsmessaging/v1/outbound/%s/requests?access_token=%s' %(SENDER_ADDRESS, access_token), data=data)
+                if resp.status_code == 400:
+                    resp = requests.post('https://devapi.globelabs.com.ph/smsmessaging/v1/outbound/%s/requests?access_token=%s' %(SMS_SENDER_ADDRESS, access_token), data=data)
+                else:
+                    print('Message not sent!')
+                    break
+                print('Message sent!')
 
     for status in tweepy.Cursor(api.user_timeline, id=mmda).items(1):
         advisory = Advisory.query.filter_by(twitter_id=mmda).filter_by(advisory=status.text).first()
@@ -106,10 +114,17 @@ def index():
 
             subscription = Subscription.query.all()
             for subscriber in subscription:
+                print('Sending message...')
                 access_token = subscriber.access_token
                 subscriber_number = subscriber.subscriber_number
                 data = {'address': '0'+subscriber_number, 'message': 'From Official MMDA:\n\n' + status.text}
                 resp = requests.post('https://devapi.globelabs.com.ph/smsmessaging/v1/outbound/%s/requests?access_token=%s' %(SENDER_ADDRESS, access_token), data=data)
+                if resp.status_code == 400:
+                    resp = requests.post('https://devapi.globelabs.com.ph/smsmessaging/v1/outbound/%s/requests?access_token=%s' %(SMS_SENDER_ADDRESS, access_token), data=data)
+                else:
+                    print('Message not sent!')
+                    break
+                print('Message sent!')
 
     for status in tweepy.Cursor(api.user_timeline, id=raven).items(1):
         advisory = Advisory.query.filter_by(twitter_id=mmda).filter_by(advisory=status.text).first()
@@ -126,10 +141,17 @@ def index():
 
             subscription = Subscription.query.all()
             for subscriber in subscription:
+                print('Sending message...')
                 access_token = subscriber.access_token
                 subscriber_number = subscriber.subscriber_number
                 data = {'address': '0'+subscriber_number, 'message': status.text}
-                resp = requests.post('https://devapi.globelabs.com.ph/smsmessaging/v1/outbound/%s/requests?access_token=%s' %(SENDER_ADDRESS, access_token), data=data)        
+                resp = requests.post('https://devapi.globelabs.com.ph/smsmessaging/v1/outbound/%s/requests?access_token=%s' %(SENDER_ADDRESS, access_token), data=data)
+                if resp.status_code == 400:
+                    resp = requests.post('https://devapi.globelabs.com.ph/smsmessaging/v1/outbound/%s/requests?access_token=%s' %(SMS_SENDER_ADDRESS, access_token), data=data)
+                else:
+                    print('Message not sent!')
+                    break
+                print('Message sent!')
 
 
     return '<p>%s</p>' %('Complete')
