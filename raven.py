@@ -25,13 +25,15 @@ class Subscription(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     access_token = db.Column(db.String(50))
     subscriber_number = db.Column(db.String(50))
+    location = db.Column(db.String(50), default=None)
 
-    def __init__(self, access_token, subscriber_number):
+    def __init__(self, access_token, subscriber_number, location):
         self.access_token = access_token
         self.subscriber_number = subscriber_number
+        self.location = location
 
     def __repr__(self):
-        return '{"access_token":%s, "subscriber_number":%s}' % (self.access_token, self.subscriber_number)
+        return '{"access_token":%s, "subscriber_number":%s, "location":%s}' % (self.access_token, self.subscriber_number, self.location)
 
 class Advisory(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -170,7 +172,7 @@ def subscription():
         access_token = str(subscription_details['access_token'])
         subscriber_number = str(subscription_details['subscriber_number'])
 
-        subscriber = Subscription(access_token, subscriber_number)
+        subscriber = Subscription(access_token, subscriber_number, None)
         db.session.add(subscriber)
         db.session.commit()
 
@@ -192,7 +194,7 @@ def sms_subscription():
         access_token = request.args.get('access_token')
         subscriber_number = request.args.get('subscriber_number')
 
-        subscriber = Subscription(access_token, subscriber_number)
+        subscriber = Subscription(access_token, subscriber_number, None)
         db.session.add(subscriber)
         db.session.commit()
 
