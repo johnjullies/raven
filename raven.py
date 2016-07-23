@@ -27,15 +27,17 @@ class Subscription(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     access_token = db.Column(db.String(50))
     subscriber_number = db.Column(db.String(50))
+    location_access_token = db.Column(db.String(50), default=None)
     location = db.Column(db.String(50), default=None)
 
-    def __init__(self, access_token, subscriber_number, location):
+    def __init__(self, access_token, subscriber_number, location_access_token, location):
         self.access_token = access_token
         self.subscriber_number = subscriber_number
+        self.location_access_token = location_access_token
         self.location = location
 
     def __repr__(self):
-        return '{"access_token":%s, "subscriber_number":%s, "location":%s}' % (self.access_token, self.subscriber_number, self.location)
+        return '{"access_token":%s, "subscriber_number":%s, "location_access_token":%s, "location":%s}' % (self.access_token, self.subscriber_number, self.location_access_token, self.location)
 
 class Advisory(db.Model):
     id = db.Column(db.Integer, primary_key=True)
