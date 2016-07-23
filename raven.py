@@ -15,7 +15,7 @@ ACCESS_TOKEN_KEY = '756726101037035520-U9fXICkjaQDD4i6Z5JVTEBA3DgGWb7f'
 ACCESS_TOKEN_SECRET = '5XWImOc46ga9YPPqVY3u1ykyeTePW2ZVd3P9BfbPTSPwL'
 
 
-app = Flask(__name__)
+app = Flask(__name__, static_url_path='/static')
 app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://postgres:@localhost/raven'
 db = SQLAlchemy(app)
 
@@ -57,7 +57,7 @@ def get_api(cfg):
     return tweepy.API(auth)
 
 
-@app.route('/')
+@app.route('/sendmessage')
 def index():
     pagasa = '202890266'
     mmda = '171574926'
@@ -196,6 +196,15 @@ def sms_notification():
     sender_address = inbound_sms['inboundSMSMessageList']['inboundSMSMessage'][0]['senderAddress']
 
     return render_template('base.html'), 200
+
+
+@app.route('/', methods=['GET', 'POST'])
+def landing():
+    return render_template('index.html'), 200
+
+@app.route('/signup', methods=['GET', 'POST'])
+def signup():
+    return render_template('signup.html'), 200
 
 
 if __name__ == "__main__":
