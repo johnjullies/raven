@@ -137,20 +137,28 @@ def index():
 
 @app.route('/subscribe', methods=['GET', 'POST'])
 def subscription():
-    print('Webform Subscription')
-    print(request.values)
+    if request.args.get('code'):
+        print('Webform Subscription')
 
-    code = request.args.get('code')
-    json = {'app_id': APP_ID, 'app_secret': APP_SECRET, 'code':code}
-    resp = requests.post('http://developer.globelabs.com.ph/oauth/access_token', data=json)
-    subscription_details = resp.json()
-    print(subscription_details['access_token'])
-    access_token = str(subscription_details['access_token'])
-    subscriber_number = str(subscription_details['subscriber_number'])
+        code = request.args.get('code')
+        json = {'app_id': APP_ID, 'app_secret': APP_SECRET, 'code':code}
+        resp = requests.post('http://developer.globelabs.com.ph/oauth/access_token', data=json)
+        subscription_details = resp.json()
+        print(subscription_details['access_token'])
+        access_token = str(subscription_details['access_token'])
+        subscriber_number = str(subscription_details['subscriber_number'])
 
-    subscriber = Subscription(access_token, subscriber_number)
-    db.session.add(subscriber)
-    db.session.commit()
+        subscriber = Subscription(access_token, subscriber_number)
+        db.session.add(subscriber)
+        db.session.commit()
+
+    else:
+        print('Webform Unsubscription')
+        unsubscribed = request.json
+        access_token = unsubscribed['unsubscribed']['access_token']
+        unsubscription = Subscription.query.filter_by(access_token=access_token).first()
+        db.session.delete(unsubscription)
+        db.session.commit()
 
     return render_template('base.html'), 200
 
