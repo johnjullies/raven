@@ -182,6 +182,18 @@ def sms_subscription():
         db.session.delete(unsubscription)
         db.session.commit()
 
+    return render_template('base.html'), 200
+
+
+@app.route('/notification', methods=['GET', 'POST'])
+def sms_notification():
+    inbound_sms = request.json
+    datetime = inbound_sms['inboundSMSMessageList']['inboundSMSMessage'][0]['dateTime']
+    destination_address = inbound_sms['inboundSMSMessageList']['inboundSMSMessage'][0]['destinationAddress']
+    message_id = inbound_sms['inboundSMSMessageList']['inboundSMSMessage'][0]['messageId']
+    message = inbound_sms['inboundSMSMessageList']['inboundSMSMessage'][0]['message']
+    resource_url = inbound_sms['inboundSMSMessageList']['inboundSMSMessage'][0]['resourceURL']
+    sender_address = inbound_sms['inboundSMSMessageList']['inboundSMSMessage'][0]['senderAddress']
 
     return render_template('base.html'), 200
 
