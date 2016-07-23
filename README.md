@@ -8,3 +8,5 @@ To run raven.
 * Execute ngrok and tunnel port 5000
 * Reconfigure globe labs app
 
+Other requirement/s:
+  postgresql
