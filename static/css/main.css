@@ -3035,7 +3035,7 @@
 
             .spotlight .image img {
                 display: block;
-                border-radius: 100%;
+                /*border-radius: 100%;*/
                 width: 16em;
             }
 
@@ -3586,7 +3586,7 @@
         }
 
         #main .spotlight .image {
-            border-color: #dddddd;
+            /*border-color: #dddddd;*/
         }
 
         #main > .main {
