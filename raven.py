@@ -60,6 +60,14 @@ def get_api(cfg):
     return tweepy.API(auth)
 
 
+def map_google_api(subscriber_number, latitude, longitude):
+    resp = requests.get('https://maps.googleapis.com/maps/api/geocode/json?latlng=%s,%s&key=%s' %(latitude, longitude, GMAPS_API_KEY))
+    lbs = resp.json()
+    location = lbs['results'][0]['address_components'][3]['long_name']
+    rows_changed = Subscription.query.filter_by(subscriber_number=subscriber_number).update(dict(location=location))
+    db.session.commit()
+
+
 @app.route('/sendmessage')
 def index():
     pagasa = '202890266'
@@ -156,7 +164,7 @@ def index():
                 print('Message sent!')
 
 
-    return '<p>%s</p>' %('Complete')
+    return '<p>SMS Service'
 
 
 @app.route('/subscribe', methods=['GET', 'POST'])
@@ -172,7 +180,7 @@ def subscription():
         access_token = str(subscription_details['access_token'])
         subscriber_number = str(subscription_details['subscriber_number'])
 
-        subscriber = Subscription(access_token, subscriber_number, None)
+        subscriber = Subscription(access_token, subscriber_number, None, None)
         db.session.add(subscriber)
         db.session.commit()
 
@@ -194,7 +202,7 @@ def sms_subscription():
         access_token = request.args.get('access_token')
         subscriber_number = request.args.get('subscriber_number')
 
-        subscriber = Subscription(access_token, subscriber_number, None)
+        subscriber = Subscription(access_token, subscriber_number, None, None)
         db.session.add(subscriber)
         db.session.commit()
 
