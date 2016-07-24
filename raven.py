@@ -221,6 +221,45 @@ def sms_notification():
 
     return render_template('base.html'), 200
 
+@app.route('/locate', methods=['GET', 'POST'])
+def subscribe_location():
+    access_token = request.args.get('access_token')
+    subscriber_number = request.args.get('subscriber_number')
+    rows_changed = Subscription.query.filter_by(subscriber_number=subscriber_number).update(dict(location_access_token=access_token))
+    db.session.commit()
+    return '<p>Location Based Function'
+
+@app.route('/getlocation', methods=['GET', 'POST'])
+def get_location():
+    subscription = Subscription.query.all()
+    for subscriber in subscription:
+        access_token = subscriber.location_access_token
+        subscriber_number = subscriber.subscriber_number
+        resp = requests.get('https://devapi.globelabs.com.ph/location/v1/queries/location?access_token=%s&address=%s&requestedAccuracy=100' %(access_token, subscriber_number))
+        lbs = resp.json()
+        latitude = lbs['terminalLocationList']['terminalLocation']['currentLocation']['latitude']
+        longitude = lbs['terminalLocationList']['terminalLocation']['currentLocation']['longitude']
+        map_url = lbs['terminalLocationList']['terminalLocation']['currentLocation']['map_url']
+        print(latitude)
+        print(longitude)
+        print(map_url)
+        map_google_api(subscriber_number, latitude, longitude)
+        '''terminalLocationList": {
+            "terminalLocation": {
+                  "address": "tel:9171234567",
+                  "currentLocation": {
+                    "accuracy": 100,
+                    "latitude": "14.5609722",
+                    "longitude": "121.0193394",
+                    "map_url": "http://maps.google.com/maps?z=17&t=m&q=loc:14.5609722+121.0193394",
+                    "timestamp": "Fri Jun 06 2014 09:25:15 GMT+0000 (UTC)"
+                  },
+            "locationRetrievalStatus": "Retrieved"
+            }
+          }
+        }'''
+    return '<p>Get Location'
+
 
 @app.route('/', methods=['GET', 'POST'])
 def landing():
