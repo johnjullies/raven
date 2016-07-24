@@ -3,6 +3,7 @@ import requests
 import tweepy
 from flask import Flask, render_template, request
 from flask_sqlalchemy import SQLAlchemy
+from fuzzywuzzy import fuzz
 
 
 # WEBFORM APP
@@ -28,7 +29,7 @@ class Subscription(db.Model):
     access_token = db.Column(db.String(50))
     subscriber_number = db.Column(db.String(50))
     location_access_token = db.Column(db.String(50), default=None)
-    location = db.Column(db.String(50), default=None)
+    location = db.Column(db.String(100), default=None)
 
     def __init__(self, access_token, subscriber_number, location_access_token, location):
         self.access_token = access_token
@@ -63,7 +64,7 @@ def get_api(cfg):
 def map_google_api(subscriber_number, latitude, longitude):
     resp = requests.get('https://maps.googleapis.com/maps/api/geocode/json?latlng=%s,%s&key=%s' %(latitude, longitude, GMAPS_API_KEY))
     lbs = resp.json()
-    location = lbs['results'][0]['address_components'][3]['long_name']
+    location = lbs['results'][0]['formatted_address']
     rows_changed = Subscription.query.filter_by(subscriber_number=subscriber_number).update(dict(location=location))
     db.session.commit()
 
@@ -96,15 +97,16 @@ def send_sms_from_twitter(twitter_id, warning_message, source):
                 access_token = subscriber.access_token
                 subscriber_number = subscriber.subscriber_number
                 location = subscriber.location
-                message = source + status.text + '\n\nCurrent location: ' + str(location)
+                message = source + status.text
                 data = {'address': '0'+subscriber_number, 'message': message}
-                resp = requests.post('https://devapi.globelabs.com.ph/smsmessaging/v1/outbound/%s/requests?access_token=%s' %(SENDER_ADDRESS, access_token), data=data)
-                if resp.status_code == 400:
-                    resp = requests.post('https://devapi.globelabs.com.ph/smsmessaging/v1/outbound/%s/requests?access_token=%s' %(SMS_SENDER_ADDRESS, access_token), data=data)
-                else:
-                    print('Message not sent!')
-                    break
-                print('Message sent!')
+                if fuzz.token_sort_ratio(location, status.text) > 20:
+                    resp = requests.post('https://devapi.globelabs.com.ph/smsmessaging/v1/outbound/%s/requests?access_token=%s' %(SENDER_ADDRESS, access_token), data=data)
+                    if resp.status_code == 400:
+                        resp = requests.post('https://devapi.globelabs.com.ph/smsmessaging/v1/outbound/%s/requests?access_token=%s' %(SMS_SENDER_ADDRESS, access_token), data=data)
+                    else:
+                        print('Message not sent!')
+                        break
+                    print('Message sent!')
 
 
 @app.route('/sendmessage')
@@ -114,7 +116,6 @@ def index():
     raven = '756726101037035520'
 
     send_sms_from_twitter(pagasa, 'Stop: PAGASA Advisory already sent!', 'FROM PAGASA-DOST:\n\n')
-    send_sms_from_twitter(mmda, 'Stop: MMDA Advisory already sent!', 'FROM MMDA:\n\n')
     send_sms_from_twitter(raven, 'Stop: RAVEN Advisory already sent!', '')
 
     return '<p>SMS Service'
@@ -204,13 +205,17 @@ def get_location():
         subscriber_number = subscriber.subscriber_number
         resp = requests.get('https://devapi.globelabs.com.ph/location/v1/queries/location?access_token=%s&address=%s&requestedAccuracy=100' %(access_token, subscriber_number))
         lbs = resp.json()
-        latitude = lbs['terminalLocationList']['terminalLocation']['currentLocation']['latitude']
-        longitude = lbs['terminalLocationList']['terminalLocation']['currentLocation']['longitude']
-        map_url = lbs['terminalLocationList']['terminalLocation']['currentLocation']['map_url']
-        print(latitude)
-        print(longitude)
-        print(map_url)
-        map_google_api(subscriber_number, latitude, longitude)
+        try:
+            latitude = lbs['terminalLocationList']['terminalLocation']['currentLocation']['latitude']
+            longitude = lbs['terminalLocationList']['terminalLocation']['currentLocation']['longitude']
+            map_url = lbs['terminalLocationList']['terminalLocation']['currentLocation']['map_url']
+            print(latitude)
+            print(longitude)
+            print(map_url)
+            map_google_api(subscriber_number, latitude, longitude)
+        except KeyError as e:
+            print('%s is not subscribed to the Location-Based Service.' )
+
         '''terminalLocationList": {
             "terminalLocation": {
                   "address": "tel:9171234567",
