@@ -133,6 +133,9 @@ def subscription():
         access_token = str(subscription_details['access_token'])
         subscriber_number = str(subscription_details['subscriber_number'])
 
+        data = {'address': '0'+subscriber_number, 'message': 'If you want to subscribe to location based service of Raven. TEXT INFO TO 21582708.'}
+        resp = requests.post('https://devapi.globelabs.com.ph/smsmessaging/v1/outbound/%s/requests?access_token=%s' %(SENDER_ADDRESS, access_token), data=data)
+
         subscriber = Subscription(access_token, subscriber_number, None, None)
         db.session.add(subscriber)
         db.session.commit()
@@ -154,6 +157,9 @@ def sms_subscription():
         print('SMS Subscription')
         access_token = request.args.get('access_token')
         subscriber_number = request.args.get('subscriber_number')
+
+        data = {'address': '0'+subscriber_number, 'message': 'If you want to subscribe to location based service of Raven. TEXT INFO TO 21582708.'}
+        resp = requests.post('https://devapi.globelabs.com.ph/smsmessaging/v1/outbound/%s/requests?access_token=%s' %(SMS_SENDER_ADDRESS, access_token), data=data)
 
         subscriber = Subscription(access_token, subscriber_number, None, None)
         db.session.add(subscriber)
