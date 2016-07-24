@@ -96,7 +96,7 @@ def send_sms_from_twitter(twitter_id, warning_message, source):
                 access_token = subscriber.access_token
                 subscriber_number = subscriber.subscriber_number
                 location = subscriber.location
-                message = 'FROM ' + source +':\n\n' + status.text + '\n\nCurrent location: ' + str(location)
+                message = source + status.text + '\n\nCurrent location: ' + str(location)
                 data = {'address': '0'+subscriber_number, 'message': message}
                 resp = requests.post('https://devapi.globelabs.com.ph/smsmessaging/v1/outbound/%s/requests?access_token=%s' %(SENDER_ADDRESS, access_token), data=data)
                 if resp.status_code == 400:
@@ -113,9 +113,9 @@ def index():
     mmda = '171574926'
     raven = '756726101037035520'
 
-    send_sms_from_twitter(pagasa, 'Stop: PAGASA Advisory already sent!', 'PAGASA-DOST')
-    send_sms_from_twitter(mmda, 'Stop: MMDA Advisory already sent!', 'MMDA')
-    send_sms_from_twitter(raven, 'Stop: RAVEN Advisory already sent!', 'RAVEN')
+    send_sms_from_twitter(pagasa, 'Stop: PAGASA Advisory already sent!', 'FROM PAGASA-DOST:\n\n')
+    send_sms_from_twitter(mmda, 'Stop: MMDA Advisory already sent!', 'FROM MMDA:\n\n')
+    send_sms_from_twitter(raven, 'Stop: RAVEN Advisory already sent!', '')
 
     return '<p>SMS Service'
 
