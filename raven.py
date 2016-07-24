@@ -68,12 +68,7 @@ def map_google_api(subscriber_number, latitude, longitude):
     db.session.commit()
 
 
-@app.route('/sendmessage')
-def index():
-    pagasa = '202890266'
-    mmda = '171574926'
-    raven = '756726101037035520'
-
+def send_sms_from_twitter(twitter_id, warning_message, source):
     cfg = {
         'consumer_key': CONSUMER_KEY,
         'consumer_secret': CONSUMER_SECRET,
@@ -82,16 +77,16 @@ def index():
     }
     api = get_api(cfg)
 
-    for status in tweepy.Cursor(api.user_timeline, id=pagasa).items(1):
-        advisory = Advisory.query.filter_by(twitter_id=pagasa).filter_by(advisory=status.text).first()
+    for status in tweepy.Cursor(api.user_timeline, id=twitter_id).items(1):
+        advisory = Advisory.query.filter_by(twitter_id=twitter_id).filter_by(advisory=status.text).first()
 
         if advisory:
-            print('Stop: PAGASA Advisory already sent!')
+            print(warning_message)
         else:
-            rows_changed = Advisory.query.filter_by(twitter_id=pagasa).update(dict(status=False))
+            rows_changed = Advisory.query.filter_by(twitter_id=twitter_id).update(dict(status=False))
             db.session.commit()
 
-            advisory = Advisory(pagasa, status.text, True)
+            advisory = Advisory(twitter_id, status.text, True)
             db.session.add(advisory)
             db.session.commit()
 
@@ -100,7 +95,9 @@ def index():
                 print('Sending message...')
                 access_token = subscriber.access_token
                 subscriber_number = subscriber.subscriber_number
-                data = {'address': '0'+subscriber_number, 'message': 'From PAGASA-DOST:\n\n' + status.text}
+                location = subscriber.location
+                message = 'FROM ' + source +':\n\n' + status.text + '\n\nCurrent location: ' + str(location)
+                data = {'address': '0'+subscriber_number, 'message': message}
                 resp = requests.post('https://devapi.globelabs.com.ph/smsmessaging/v1/outbound/%s/requests?access_token=%s' %(SENDER_ADDRESS, access_token), data=data)
                 if resp.status_code == 400:
                     resp = requests.post('https://devapi.globelabs.com.ph/smsmessaging/v1/outbound/%s/requests?access_token=%s' %(SMS_SENDER_ADDRESS, access_token), data=data)
@@ -109,60 +106,16 @@ def index():
                     break
                 print('Message sent!')
 
-    for status in tweepy.Cursor(api.user_timeline, id=mmda).items(1):
-        advisory = Advisory.query.filter_by(twitter_id=mmda).filter_by(advisory=status.text).first()
 
-        if advisory:
-            print('Stop: MMDA Advisory already sent!')
-        else:
-            rows_changed = Advisory.query.filter_by(twitter_id=mmda).update(dict(status=False))
-            db.session.commit()
+@app.route('/sendmessage')
+def index():
+    pagasa = '202890266'
+    mmda = '171574926'
+    raven = '756726101037035520'
 
-            advisory = Advisory(mmda, status.text, True)
-            db.session.add(advisory)
-            db.session.commit()
-
-            subscription = Subscription.query.all()
-            for subscriber in subscription:
-                print('Sending message...')
-                access_token = subscriber.access_token
-                subscriber_number = subscriber.subscriber_number
-                data = {'address': '0'+subscriber_number, 'message': 'From Official MMDA:\n\n' + status.text}
-                resp = requests.post('https://devapi.globelabs.com.ph/smsmessaging/v1/outbound/%s/requests?access_token=%s' %(SENDER_ADDRESS, access_token), data=data)
-                if resp.status_code == 400:
-                    resp = requests.post('https://devapi.globelabs.com.ph/smsmessaging/v1/outbound/%s/requests?access_token=%s' %(SMS_SENDER_ADDRESS, access_token), data=data)
-                else:
-                    print('Message not sent!')
-                    break
-                print('Message sent!')
-
-    for status in tweepy.Cursor(api.user_timeline, id=raven).items(1):
-        advisory = Advisory.query.filter_by(twitter_id=mmda).filter_by(advisory=status.text).first()
-
-        if advisory:
-            print('Stop: Raven Advisory already sent!')
-        else:
-            rows_changed = Advisory.query.filter_by(twitter_id=raven).update(dict(status=False))
-            db.session.commit()
-
-            advisory = Advisory(raven, status.text, True)
-            db.session.add(advisory)
-            db.session.commit()
-
-            subscription = Subscription.query.all()
-            for subscriber in subscription:
-                print('Sending message...')
-                access_token = subscriber.access_token
-                subscriber_number = subscriber.subscriber_number
-                data = {'address': '0'+subscriber_number, 'message': status.text}
-                resp = requests.post('https://devapi.globelabs.com.ph/smsmessaging/v1/outbound/%s/requests?access_token=%s' %(SENDER_ADDRESS, access_token), data=data)
-                if resp.status_code == 400:
-                    resp = requests.post('https://devapi.globelabs.com.ph/smsmessaging/v1/outbound/%s/requests?access_token=%s' %(SMS_SENDER_ADDRESS, access_token), data=data)
-                else:
-                    print('Message not sent!')
-                    break
-                print('Message sent!')
-
+    send_sms_from_twitter(pagasa, 'Stop: PAGASA Advisory already sent!', 'PAGASA-DOST')
+    send_sms_from_twitter(mmda, 'Stop: MMDA Advisory already sent!', 'MMDA')
+    send_sms_from_twitter(raven, 'Stop: RAVEN Advisory already sent!', 'RAVEN')
 
     return '<p>SMS Service'
 
